@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BenchNano — Controle Mobile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <div class="device">
+      <div class="preview-wrap">
+        <div class="preview" id="preview">
+          <div class="specimen" id="specimen"></div>
+          <div class="device-tag"><span class="dot"></span>BenchNano · Conectado</div>
+          <div class="top-bar">
+            <button class="top-icon" id="ledBtn" onclick="toggleLED(this)" title="Iluminação LED"><span class="material-symbols-rounded">bolt</span></button>
+            <button class="top-icon" onclick="openSheet('settingsRoot')" title="Configurações"><span class="material-symbols-rounded">tune</span></button>
+          </div>
+
+          <div class="zoom-row">
+            <div class="zoom-pill">
+              <div class="mag-chip" data-v="100">100×</div>
+              <div class="mag-chip active" data-v="400">400×</div>
+              <div class="mag-chip" data-v="1000">1000×</div>
+            </div>
+            <div class="quick-anchor">
+              <div class="quick-pill" id="quickPill">
+                <button class="quick-item" id="isoQuick" onclick="cycleISO()">ISO 400</button>
+                <button class="quick-item icon-only" id="lightQuick" onclick="toggleQuickItem(this)" title="Ligar/Desligar Luz"><span class="material-symbols-rounded">flashlight_on</span></button>
+                <button class="quick-item active" id="wbQuick" onclick="toggleQuickItem(this)" title="Balanço de Branco Automático">AWB</button>
+                <button class="quick-item icon-only" id="gridQuick" onclick="toggleQuickItem(this)" title="Grade de alinhamento"><span class="material-symbols-rounded">grid_on</span></button>
+                <button class="quick-item icon-only close" onclick="toggleQuickPill()" title="Fechar"><span class="material-symbols-rounded">close</span></button>
+              </div>
+              <button class="quick-square" id="quickSquareBtn" onclick="toggleQuickPill()" title="Ajustes rápidos"><span class="material-symbols-rounded">apps</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mode-tabs" id="quickTabs">
+        <div class="mode-tab" onclick="openSheet('focus')">FOCO</div>
+        <div class="mode-tab" onclick="openSheet('camera')">CÂMERA</div>
+        <div class="mode-tab" onclick="openSheet('optical')">ÓPTICA</div>
+        <div class="mode-tab" onclick="openSheet('fluidicAcq')">FLUÍDICA</div>
+      </div>
+
+      <div class="bottom-bar">
+        <button class="thumb-btn has-badge" onclick="openSheet('gallery')"><span class="material-symbols-rounded" style="font-size:20px;">image</span><span class="badge" id="galBadge">0</span></button>
+        <button class="pump-toggle stopped" id="pumpToggle" onclick="togglePump()" title="Iniciar/Parar bomba"><span class="material-symbols-rounded">play_arrow</span></button>
+        <button class="reverse-btn" onclick="reversePump()" title="Reverter direção da bomba"><span class="material-symbols-rounded">sync_alt</span></button>
+      </div>
+
+      <div class="flash" id="flash"></div>
+      <div class="toast" id="toast"><span class="material-symbols-rounded">check_circle</span><span id="toastText">Capturado</span></div>
+
+      <div class="scrim" id="scrim" onclick="closeSheet()"></div>
+
+      <!-- SETTINGS ROOT SHEET -->
+      <div class="sheet" id="settingsRoot">
+        <div class="sheet-handle"></div>
+        <div class="sheet-head">
+          <div>
+            <div class="sheet-title">Configurações</div>
+            <div class="sheet-sub">SELECIONE UM MÓDULO</div>
+          </div>
+          <button class="sheet-close" onclick="closeSheet()"><span class="material-symbols-rounded">close</span></button>
+        </div>
+        <div class="sheet-body">
+          <div class="menu-item" onclick="openSheet('focus')"><div class="menu-icon"><span class="material-symbols-rounded">center_focus_weak</span></div><div class="menu-text"><div class="t">Ajuste de Foco</div><div class="s">Foco óptico manual</div></div><span class="material-symbols-rounded chev">chevron_right</span></div>
+          <div class="menu-item" onclick="openSheet('camera')"><div class="menu-icon"><span class="material-symbols-rounded">photo_camera</span></div><div class="menu-text"><div class="t">Configurações da Câmera</div><div class="s">ISO, obturador, balanço de branco</div></div><span class="material-symbols-rounded chev">chevron_right</span></div>
+          <div class="menu-item" onclick="openSheet('optical')"><div class="menu-icon"><span class="material-symbols-rounded">biotech</span></div><div class="menu-text"><div class="t">Caracterização Óptica</div><div class="s">Lente, magnificação, resolução</div></div><span class="material-symbols-rounded chev">chevron_right</span></div>
+          <div class="menu-item" onclick="openSheet('system')"><div class="menu-icon"><span class="material-symbols-rounded">monitoring</span></div><div class="menu-text"><div class="t">Monitoramento do Sistema</div><div class="s">CPU, memória, GPS, backup USB</div></div><span class="material-symbols-rounded chev">chevron_right</span></div>
+          <div class="menu-item" onclick="openSheet('segmentation')"><div class="menu-icon"><span class="material-symbols-rounded">category</span></div><div class="menu-text"><div class="t">Segmentação</div><div class="s">Processamento de imagens e objetos</div></div><span class="material-symbols-rounded chev">chevron_right</span></div>
+          <div class="menu-item" onclick="openSheet('fluidicAcq')"><div class="menu-icon"><span class="material-symbols-rounded">waves</span></div><div class="menu-text"><div class="t">Aquisição Fluídica</div><div class="s">Captura contínua de amostra em fluxo</div></div><span class="material-symbols-rounded chev">chevron_right</span></div>
+          <div class="menu-item" onclick="openSheet('sample')"><div class="menu-icon"><span class="material-symbols-rounded">assignment</span></div><div class="menu-text"><div class="t">Amostra</div><div class="s">Identificação, rede de coleta, localização</div></div><span class="material-symbols-rounded chev">chevron_right</span></div>
+        </div>
+      </div>
+      <!-- FOLDERS FOR MODES -->
+      <div class="sheet" id="focus">
+        <div class="sheet-handle"></div>
+        <div class="sheet-head">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="back-btn" onclick="openSheet('settingsRoot')"><span class="material-symbols-rounded">arrow_back</span><span>Voltar</span></button>
+          </div>
+          <button class="sheet-close" onclick="closeSheet()"><span class="material-symbols-rounded">close</span></button>
+        </div>
+        <div class="sheet-body">
+          <div style="margin-bottom:12px;"><div class="sheet-title">Ajuste de Foco</div></div>
+
+          <div class="focus-grid">
+            <button class="focus-btn" onclick="nudgeFocus(1000)">
+              <div class="fi"><span class="material-symbols-rounded">north</span></div>
+              <div>Subir +1 mm</div>
+            </button>
+
+            <button class="focus-btn" onclick="nudgeFocus(100)">
+              <div class="fi"><span class="material-symbols-rounded">north</span></div>
+              <div>Subir +100 µm</div>
+            </button>
+
+            <button id="focusToggleBtn" class="focus-toggle-btn stopped" onclick="toggleFocus()">
+              <div class="fi"><span class="material-symbols-rounded">pause</span></div>
+              <div>Parar Foco</div>
+            </button>
+
+            <button class="focus-btn" onclick="nudgeFocus(-100)">
+              <div class="fi"><span class="material-symbols-rounded">south</span></div>
+              <div>Descer -100 µm</div>
+            </button>
+
+            <button class="focus-btn" onclick="nudgeFocus(-1000)">
+              <div class="fi"><span class="material-symbols-rounded">south</span></div>
+              <div>Descer -1 mm</div>
+            </button>
+          </div>
+
+          <div class="field-row" style="margin-top:10px;">
+            <div class="field">
+              <div class="l">DISTÂNCIA DE FOCO</div>
+              <div class="v"><span id="focusDist">12.40</span> mm</div>
+            </div>
+            <div class="field">
+              <div class="l">VELOCIDADE DE FOCO</div>
+              <div class="v">0.5 mm/s</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet" id="camera">
+        <div class="sheet-handle"></div>
+        <div class="sheet-head">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="back-btn" onclick="openSheet('settingsRoot')"><span class="material-symbols-rounded">arrow_back</span><span>Voltar</span></button>
+          </div>
+          <button class="sheet-close" onclick="closeSheet()"><span class="material-symbols-rounded">close</span></button>
+        </div>
+        <div class="sheet-body">
+          <div style="margin-bottom:16px;"><div class="sheet-title">Configurações da Câmera</div><div class="sheet-sub">Ajuste de exposição e cor</div></div>
+          <div class="section-label">ISO</div>
+          <div class="chip-row" id="isoRow">
+            <div class="chip" data-v="100">100</div>
+            <div class="chip" data-v="200">200</div>
+            <div class="chip" data-v="320">320</div>
+            <div class="chip active" data-v="400">400</div>
+            <div class="chip" data-v="500">500</div>
+            <div class="chip" data-v="640">640</div>
+            <div class="chip" data-v="800">800</div>
+          </div>
+          <div class="section-label" style="margin-top:18px;">Velocidade do obturador</div>
+          <div class="slider-block">
+            <div class="slider-top"><span class="lbl">Exposição</span><span class="val" id="shutterVal">1/125 s</span></div>
+            <input type="range" min="0" max="8" value="3" step="1" onchange="updateShutter(this.value)" oninput="updateShutter(this.value)" />
+          </div>
+          <div class="section-label">Balanço de Branco</div>
+          <div class="toggle-row" onclick="toggleSwitch('autoWB')">
+            <div class="lbl">Balanço de Branco Automático</div>
+            <div id="autoWB" class="switch on"><div class="knob"></div></div>
+          </div>
+          <div class="advanced-toggle" onclick="toggleAdvanced()">
+            <span>Avançado</span>
+            <span id="advChev">expand_less</span>
+          </div>
+          <div id="advPanel" class="advanced-panel open">
+            <div class="slider-block">
+              <div class="slider-top"><span class="lbl">Vermelho</span><span class="val" id="redVal">+12</span></div>
+              <input type="range" min="-20" max="20" value="12" step="1" oninput="updateColorVal('redVal', this.value)" />
+            </div>
+            <div class="slider-block">
+              <div class="slider-top"><span class="lbl">Azul</span><span class="val" id="blueVal">-6</span></div>
+              <input type="range" min="-20" max="20" value="-6" step="1" oninput="updateColorVal('blueVal', this.value)" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet" id="optical">
+        <div class="sheet-handle"></div>
+        <div class="sheet-head">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="back-btn" onclick="openSheet('settingsRoot')"><span class="material-symbols-rounded">arrow_back</span><span>Voltar</span></button>
+          </div>
+          <button class="sheet-close" onclick="closeSheet()"><span class="material-symbols-rounded">close</span></button>
+        </div>
+        <div class="sheet-body">
+          <div style="margin-bottom:16px;"><div class="sheet-title">Caracterização Óptica</div><div class="sheet-sub">Ajustes de lente e imagem</div></div>
+          <div class="toggle-row" onclick="toggleSwitch('lightSource')">
+            <div class="lbl">Fonte de Luz</div>
+            <div id="lightSource" class="switch on"><div class="knob"></div></div>
+          </div>
+          <div class="info-grid" style="margin-top:14px;">
+            <div class="info-card">
+              <div class="l"><span class="material-symbols-rounded">brightness_5</span> Abertura</div>
+              <div class="v">f/0.65 NA</div>
+            </div>
+            <div class="info-card">
+              <div class="l"><span class="material-symbols-rounded">search</span> Magnificação</div>
+              <div class="v">400×</div>
+            </div>
+            <div class="info-card">
+              <div class="l"><span class="material-symbols-rounded">grid_on</span> Resolução de pixel</div>
+              <div class="v">1920×1080</div>
+            </div>
+            <div class="info-card">
+              <div class="l"><span class="material-symbols-rounded">memory</span> Menor célula</div>
+              <div class="v">2.1 µm</div>
+            </div>
+          </div>
+          <div class="info-grid" style="margin-top:12px;">
+            <div class="info-card wide">
+              <div class="l"><span class="material-symbols-rounded">aspect_ratio</span> Maior célula</div>
+              <div class="v">48.7 µm</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet" id="system">
+        <div class="sheet-handle"></div>
+        <div class="sheet-head">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="back-btn" onclick="openSheet('settingsRoot')"><span class="material-symbols-rounded">arrow_back</span><span>Voltar</span></button>
+          </div>
+          <button class="sheet-close" onclick="closeSheet()"><span class="material-symbols-rounded">close</span></button>
+        </div>
+        <div class="sheet-body">
+          <div style="margin-bottom:12px;"><div class="sheet-title">Monitoramento do Sistema</div><div class="sheet-sub">Visão geral dos recursos e status</div></div>
+
+          <div class="gauge-grid">
+            <div class="gauge-card">
+              <svg class="gauge" viewBox="0 0 100 50" preserveAspectRatio="none">
+                <path class="gauge-bg" d="M5,50 A45,45 0 0,1 95,50" fill="none" stroke="#232325" stroke-width="8" stroke-linecap="round"/>
+                <path class="gauge-fg" id="procArc" d="M5,50 A45,45 0 0,1 95,50" fill="none" stroke="var(--teal-bright)" stroke-width="8" stroke-linecap="round" stroke-dasharray="141.37" stroke-dashoffset="141.37"/>
+              </svg>
+              <div class="ctitle">PROCESSADOR</div>
+              <div class="gauge-value" id="procVal">34%</div>
+            </div>
+            <div class="gauge-card">
+              <svg class="gauge" viewBox="0 0 100 50" preserveAspectRatio="none">
+                <path class="gauge-bg" d="M5,50 A45,45 0 0,1 95,50" fill="none" stroke="#232325" stroke-width="8" stroke-linecap="round"/>
+                <path class="gauge-fg" id="cpuArc" d="M5,50 A45,45 0 0,1 95,50" fill="none" stroke="var(--teal-bright)" stroke-width="8" stroke-linecap="round" stroke-dasharray="141.37" stroke-dashoffset="141.37"/>
+              </svg>
+              <div class="ctitle">TEMP. CPU</div>
+              <div class="gauge-value" id="cpuTemp">42°C</div>
+            </div>
+            <div class="gauge-card">
+              <svg class="gauge" viewBox="0 0 100 50" preserveAspectRatio="none">
+                <path class="gauge-bg" d="M5,50 A45,45 0 0,1 95,50" fill="none" stroke="#232325" stroke-width="8" stroke-linecap="round"/>
+                <path class="gauge-fg" id="memArc" d="M5,50 A45,45 0 0,1 95,50" fill="none" stroke="var(--teal-bright)" stroke-width="8" stroke-linecap="round" stroke-dasharray="141.37" stroke-dashoffset="141.37"/>
+              </svg>
+              <div class="ctitle">MEMÓRIA</div>
+              <div class="gauge-value" id="memVal">58%</div>
+            </div>
+            <div class="gauge-card">
+              <svg class="gauge" viewBox="0 0 100 50" preserveAspectRatio="none">
+                <path class="gauge-bg" d="M5,50 A45,45 0 0,1 95,50" fill="none" stroke="#232325" stroke-width="8" stroke-linecap="round"/>
+                <path class="gauge-fg" id="diskArc" d="M5,50 A45,45 0 0,1 95,50" fill="none" stroke="var(--teal-bright)" stroke-width="8" stroke-linecap="round" stroke-dasharray="141.37" stroke-dashoffset="141.37"/>
+              </svg>
+              <div class="ctitle">DISCO</div>
+              <div class="gauge-value" id="diskVal">71%</div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;border-top:1px solid var(--divider);padding-top:12px;">
+            <div class="section-label">INFORMAÇÕES</div>
+            <div class="info-row"><div class="k">Nome do Instrumento</div><div class="v">BenchNano-X1</div></div>
+            <div class="info-row"><div class="k">Tipo de Instrumento</div><div class="v">Microscópio Portátil</div></div>
+            <div class="info-row"><div class="k">Versão do Software</div><div class="v">v2.4.1</div></div>
+            <div class="info-row"><div class="k">Nome da Câmera</div><div class="v">BN-CAM-01</div></div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <div class="section-label">NAVEGAÇÃO</div>
+            <button class="action-btn primary" onclick="showToast('Indo para início','home')"> <span class="material-symbols-rounded">home</span> Início</button>
+            <div class="toggle-row" style="margin-top:8px;"><div class="lbl">Ventoinha</div><div id="fanSwitch" class="switch"><div class="knob"></div></div></div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <div class="section-label">BACKUP USB</div>
+            <button class="action-btn primary" onclick="detectUSB()"><span class="material-symbols-rounded">usb</span> Detectar Unidade</button>
+            <div style="margin-top:8px;">
+              <select style="width:100%;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--divider);color:var(--text);">
+                <option>Escolher dispositivo USB</option>
+              </select>
+            </div>
+            <button class="action-btn primary" style="margin-top:10px;" onclick="backupUSB()"><span class="material-symbols-rounded">cloud_upload</span> Fazer Backup no USB</button>
+            <button class="action-btn danger" style="margin-top:8px;" onclick="eraseLocal()"><span class="material-symbols-rounded">delete</span> Apagar Dados Locais</button>
+          </div>
+
+          <div style="margin-top:12px;border-top:1px solid var(--divider);padding-top:12px;">
+            <div class="section-label">STATUS GPS</div>
+            <div class="info-row"><div class="k">Status</div><div class="v">SEM SINAL</div></div>
+            <div class="info-row"><div class="k">Data/hora UTC do GPS</div><div class="v">-</div></div>
+            <div class="info-row"><div class="k">Data/hora UTC local</div><div class="v" id="localTime">--/--/---- --:--</div></div>
+
+            <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div class="info-card"><div class="l">VELOCIDADE</div><div class="v">0.0 kts</div></div>
+              <div class="info-card"><div class="l">DIREÇÃO</div><div class="v">0.0°</div></div>
+              <div class="info-card"><div class="l">LATITUDE</div><div class="v">-</div></div>
+              <div class="info-card"><div class="l">LONGITUDE</div><div class="v">-</div></div>
+            </div>
+
+            <button class="action-btn primary" style="margin-top:12px;" onclick="forceTimeUpdate()"><span class="material-symbols-rounded">refresh</span> Forçar Atualização do Relógio Local</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet" id="segmentation">
+        <div class="sheet-handle"></div>
+        <div class="sheet-head">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="back-btn" onclick="openSheet('settingsRoot')"><span class="material-symbols-rounded">arrow_back</span><span>Voltar</span></button>
+          </div>
+          <button class="sheet-close" onclick="closeSheet()"><span class="material-symbols-rounded">close</span></button>
+        </div>
+        <div class="sheet-body">
+          <div style="margin-bottom:12px;">
+            <div class="sheet-title">Segmentação</div>
+            <div class="sheet-sub">Processamento e contagem de objetos</div>
+          </div>
+
+          <div style="margin-bottom:12px; text-align:center;">
+            <button id="updateFoldersBtn" class="action-btn primary" style="max-width:320px;margin:0 auto;display:inline-flex;align-items:center;justify-content:center;gap:10px;">
+              <span class="material-symbols-rounded">cached</span> Atualizar Lista de Pastas
+            </button>
+          </div>
+
+          <div class="section-label">STATUS</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="color:var(--text-dim);">Status do segmentador</div>
+            <div style="background:var(--card);padding:6px 10px;border-radius:999px;border:1px solid var(--divider);font-weight:700;">OCIOSO</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr;gap:12px;">
+            <div class="seg-card">
+              <div class="seg-card-title">Contagem de Objetos</div>
+              <div class="seg-card-count">0</div>
+              <div class="seg-card-sub">contagem de objetos</div>
+            </div>
+            <div class="seg-card" style="color:var(--text-faint);">
+              <div class="seg-card-title">Gráfico de Área</div>
+              <div style="padding:18px 6px;">Sem dados ainda — rode a segmentação pra ver os resultados aqui</div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <div class="section-label">CONTROLE</div>
+            <div style="color:var(--text-dim);margin-bottom:8px;">Escolha em quais pastas o script de segmentação deve rodar. A segmentação é executada recursivamente; selecionar uma pasta de nível superior roda também em todas as subpastas.</div>
+            <div class="field" style="margin-bottom:8px;">
+              <div class="l">ID único do processo*</div>
+              <input class="underline-input" type="text" placeholder="ex: BN-2026-0806-01" />
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>Forçar reprocessamento</div>
+                <div class="segmented" style="margin-left:10px;"><div class="opt">Não</div><div class="opt active">Sim</div></div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>Pasta recursiva</div>
+                <div class="segmented" style="margin-left:10px;"><div class="opt">Não</div><div class="opt active">Sim</div></div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>Manter objetos</div>
+                <div class="segmented" style="margin-left:10px;"><div class="opt">Não</div><div class="opt active">Sim</div></div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>Arquivo Ecotaxa</div>
+                <div class="segmented" style="margin-left:10px;"><div class="opt">Não</div><div class="opt active">Sim</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet" id="fluidicAcq">
+        <div class="sheet-handle"></div>
+        <div class="sheet-head">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="back-btn" onclick="openSheet('settingsRoot')"><span class="material-symbols-rounded">arrow_back</span><span>Voltar</span></button>
+          </div>
+          <button class="sheet-close" onclick="closeSheet()"><span class="material-symbols-rounded">close</span></button>
+        </div>
+        <div class="sheet-body">
+          <div style="margin-bottom:12px;"><div class="sheet-title">Aquisição Fluídica</div><div class="sheet-sub">Controle de bomba e fluxo</div></div>
+
+          <div style="margin-bottom:12px;">
+            <div class="progress-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <button class="flat-btn" onclick="showToast('Voltando','arrow_back')">← Previous</button>
+                  <div style="font-weight:800;font-size:15px;">Pré-visualização</div>
+                </div>
+                <div style="color:var(--text-dim);font-size:12px;">Amostra — Câmara</div>
+              </div>
+              <div class="progress-surface" style="margin-top:8px;border-radius:8px;">
+                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-faint);"> <span class="material-symbols-rounded">image</span> </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+            <div style="flex:1;">
+              <div class="l">Atraso para estabilizar imagem (s)</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                <button class="flat-btn" onclick="changeFluidDelay(-0.1)">-</button>
+                <div style="flex:1;text-align:center;"><span id="fluidDelay">0.1</span></div>
+                <button class="flat-btn" onclick="changeFluidDelay(0.1)">+</button>
+              </div>
+            </div>
+            <div style="width:160px;">
+              <div class="l">Flowcell</div>
+              <select id="flowcellSelect">
+                <option>Flowcell — Selecionar opção</option>
+                <option>Flowcell A</option>
+                <option>Flowcell B</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <div class="info-row"><div class="k">Volume total capturado</div><div class="v" id="fluidTotalCaptured">-</div></div>
+            <div class="info-row"><div class="k">Volume total bombeado</div><div class="v" id="fluidTotalPumped">0.0 mL</div></div>
+          </div>
+
+          <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+            <div>Direção da bomba</div>
+            <div id="fluidDirection" class="switch"><div class="knob"></div></div>
+          </div>
+
+          <div style="margin-top:6px;margin-bottom:12px;">
+            <div class="progress-card">
+              <div style="font-weight:700;">Estatísticas</div>
+              <div style="display:flex;gap:12px;align-items:center;">
+                <div style="flex:1;">
+                  <div class="progress-surface" style="width:100%;height:100px;display:flex;align-items:center;justify-content:center;">
+                    <div style="text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--teal-bright);">0</div><div style="font-size:12px;color:var(--text-dim);">%</div></div>
+                  </div>
+                </div>
+                <div style="flex:1;">
+                  <div class="stats-grid">
+                    <div><strong>Amostra</strong><br/>projeto: —<br/>navio: —<br/>operador: —</div>
+                    <div><strong>Aquisição</strong><br/>instrumento: —<br/>id: —<br/>câmera: —</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button id="updateFluidConfig" class="action-btn primary"><span class="material-symbols-rounded">save</span> Atualizar Configuração</button>
+            <button id="stopAcq" class="action-btn danger"><span class="material-symbols-rounded">stop_circle</span> Parar Aquisição</button>
+            <button id="startAcq" class="action-btn"><span class="material-symbols-rounded">play_arrow</span> Iniciar Aquisição</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet" id="gallery">
+        <div class="sheet-handle"></div>
+        <div class="sheet-head">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="back-btn" onclick="closeSheet()"><span class="material-symbols-rounded">arrow_back</span><span>Voltar</span></button>
+          </div>
+          <button class="sheet-close" onclick="closeSheet()"><span class="material-symbols-rounded">close</span></button>
+        </div>
+        <div class="sheet-body">
+          <div style="margin-bottom:12px;"><div class="sheet-title">Galeria</div><div class="sheet-sub" id="gallerySub">0 CAPTURAS</div></div>
+          <div id="galleryEmpty" style="text-align:center;padding:32px;color:var(--text-faint);">Nenhuma captura</div>
+          <div id="galleryGrid" class="gallery-grid" style="display:none;margin-top:12px;">
+          </div>
+          <button class="action-btn primary" style="margin-top:16px;" onclick="capture()">
+            <span class="material-symbols-rounded">photo_camera</span> Capturar Agora
+          </button>
+        </div>
+      </div>
+
+      <div class="sheet" id="sample">
+        <div class="sheet-handle"></div>
+        <div class="sheet-head">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="back-btn" onclick="openSheet('settingsRoot')"><span class="material-symbols-rounded">arrow_back</span><span>Voltar</span></button>
+          </div>
+          <button class="sheet-close" onclick="closeSheet()"><span class="material-symbols-rounded">close</span></button>
+        </div>
+        <div class="sheet-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;">
+            <button class="flat-btn">← Previous</button>
+            <button class="action-btn primary" style="border-radius:20px;">Continue →</button>
+          </div>
+
+          <div style="margin-bottom:12px;"><div class="sheet-title">Amostra</div><div class="sheet-sub">Identificação da amostra</div></div>
+
+          <div class="field" style="margin-bottom:10px;"><div class="l">Nome do projeto*</div><input class="underline-input" placeholder="" /></div>
+          <div class="field" style="margin-bottom:10px;"><div class="l">Nome do navio</div><input class="underline-input" placeholder="" /></div>
+          <div class="field" style="margin-bottom:10px;"><div class="l">Nome do operador*</div><input class="underline-input" placeholder="" /></div>
+          <div class="field" style="margin-bottom:10px;"><div class="l">ID da estação*</div><input class="underline-input" placeholder="" /></div>
+
+          <div class="field" style="margin-bottom:8px;"><div class="l">Equipamento de coleta*</div>
+            <select>
+              <option>Equipamento de coleta* — Rede de plâncton</option>
+              <option>Rede A</option>
+              <option>Rede B</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="field"><div class="l">Tamanho mínimo da fração (µm)</div><input class="underline-input" /></div>
+            <div class="field"><div class="l">Profundidade mín. de coleta (m)</div><input class="underline-input" /></div>
+          </div>
+
+          <div class="form-row">
+            <div class="field"><div class="l">Tamanho máximo da fração (µm)</div><input class="underline-input" /></div>
+            <div class="field"><div class="l">Profundidade máx. de coleta (m)</div><input class="underline-input" /></div>
+          </div>
+
+          <div class="field"><div class="l">Volume filtrado (em L)</div><input class="underline-input" /></div>
+          <div class="field"><div class="l">Volume concentrado da amostra (mL)</div><input class="underline-input" /></div>
+          <div class="field"><div class="l">Fator de Diluição</div><input class="underline-input" /></div>
+          <div class="field"><div class="l">Dimensão da abertura da rede (mm)</div><input class="underline-input" /></div>
+          <div class="field"><div class="l">Velocidade na água (kts)</div><input class="underline-input" /></div>
+
+          <div style="margin-top:12px;"><div class="sheet-sub">Local de Lançamento da Rede</div></div>
+          <div class="form-row">
+            <div class="field"><div class="l">Latitude (36.574439°N ou 36°57.4439'N)*</div><input class="underline-input" /></div>
+            <div class="field"><div class="l">Longitude (110.42100°W ou 110°4.2100'W)*</div><input class="underline-input" /></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><div class="l">Data (AAAA-MM-DD UTC)*</div><input class="underline-input" type="date" /></div>
+            <div class="field"><div class="l">Hora (HH:MM, UTC 24h)*</div><input class="underline-input" type="time" /></div>
+          </div>
+          <div style="margin-top:10px;"><button id="validateLaunch" class="action-btn primary validate-btn">Validar</button></div>
+
+          <div style="margin-top:12px;"><div class="sheet-sub">Local de Recolhimento da Rede</div></div>
+          <div class="form-row">
+            <div class="field"><div class="l">Latitude (36.574439°N ou 36°57.4439'N)*</div><input class="underline-input" /></div>
+            <div class="field"><div class="l">Longitude (110.42100°W ou 110°4.2100'W)*</div><input class="underline-input" /></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><div class="l">Data (AAAA-MM-DD UTC)*</div><input class="underline-input" type="date" /></div>
+            <div class="field"><div class="l">Hora (HH:MM, UTC 24h)*</div><input class="underline-input" type="time" /></div>
+          </div>
+          <div style="margin-top:10px;"><button id="validateRecover" class="action-btn primary validate-btn">Validar</button></div>
+
+          <div style="margin-top:12px;"><div class="sheet-sub">Leituras do Fluxômetro Decknet</div><div style="font-size:12px;color:var(--text-dim);margin-top:6px;">Esses valores são usados para calcular <code>sample_total_volume</code>. Os valores são em L.</div></div>
+          <div class="form-row" style="margin-top:8px;">
+            <div class="field"><div class="l">Fluxômetro Decknet — início</div><input class="underline-input" /></div>
+            <div class="field"><div class="l">Fluxômetro Decknet — fim</div><input class="underline-input" /></div>
+          </div>
+
+          <div style="margin-top:12px;"><div class="section-label">Status GPS</div></div>
+          <div class="info-row"><div class="k">Status GPS</div><div class="v"><span class="status-chip no-fix">SEM SINAL</span></div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+            <div class="info-card"><div class="l">HORA</div><div class="v">-</div></div>
+            <div class="info-card"><div class="l">VELOCIDADE</div><div class="v">- kts</div></div>
+            <div class="info-card"><div class="l">DIREÇÃO</div><div class="v">-°</div></div>
+            <div class="info-card"><div class="l">LATITUDE</div><div class="v">-</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <script src="assets/js/app.js"></script>
+  </body>
+</html>

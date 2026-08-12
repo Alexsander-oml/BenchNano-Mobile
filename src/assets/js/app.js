@@ -1,0 +1,316 @@
+// Separated JS from original BenchNano mobile HTML
+// ---- generate specimen cells ----
+const specimen = document.getElementById('specimen');
+if(specimen){
+  for(let i=0;i<14;i++){
+    const c = document.createElement('div');
+    c.className='cell';
+    const size = 18 + Math.random()*46;
+    c.style.width = size+'px'; c.style.height = size+'px';
+    c.style.left = (Math.random()*90)+'%';
+    c.style.top = (Math.random()*90)+'%';
+    c.style.animationDuration = (10+Math.random()*10)+'s';
+    c.style.animationDelay = (Math.random()*5)+'s';
+    specimen.appendChild(c);
+  }
+}
+
+// ---- magnification chips ----
+document.querySelector('.zoom-pill')?.addEventListener('click', e=>{
+  const chip = e.target.closest('.mag-chip');
+  if(!chip) return;
+  document.querySelectorAll('.mag-chip').forEach(c=>c.classList.remove('active'));
+  chip.classList.add('active');
+});
+
+// ---- LED toggle ----
+function toggleLED(btn){ btn.classList.toggle('active'); }
+
+// ---- quick settings square/pill ----
+function toggleQuickPill(){
+  const pill = document.getElementById('quickPill');
+  const square = document.getElementById('quickSquareBtn');
+  const open = pill.classList.toggle('open');
+  square.classList.toggle('hidden', open);
+}
+function toggleQuickItem(btn){ btn.classList.toggle('active'); }
+const isoValues = [100,200,320,400,500,640,800];
+let isoIdx = 3;
+function cycleISO(){
+  isoIdx = (isoIdx+1) % isoValues.length;
+  const v = isoValues[isoIdx];
+  document.getElementById('isoQuick').textContent = 'ISO '+v;
+  document.querySelectorAll('#isoRow .chip').forEach(c=>{
+    c.classList.toggle('active', c.dataset.v == v);
+  });
+}
+
+// ---- generic numeric stepper (Fraction size, Delay) ----
+function stepValue(id, delta, decimals){
+  const el = document.getElementById(id);
+  if(!el) return;
+  let v = parseFloat(el.textContent) + delta;
+  if(v < 0) v = 0;
+  el.textContent = v.toFixed(decimals);
+}
+
+// ---- segmented (No/Yes) toggles ----
+document.querySelectorAll('.segmented').forEach(seg=>{
+  seg.addEventListener('click', e=>{
+    const opt = e.target.closest('.opt');
+    if(!opt) return;
+    seg.querySelectorAll('.opt').forEach(o=>o.classList.remove('active'));
+    opt.classList.add('active');
+  });
+});
+
+let activeSheet = null;
+function openSheet(id){
+  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'));
+  const el = document.getElementById(id);
+  if(el) el.classList.add('open');
+  document.getElementById('scrim')?.classList.add('open');
+  activeSheet = id;
+}
+function closeSheet(){
+  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'));
+  document.getElementById('scrim')?.classList.remove('open');
+  activeSheet = null;
+}
+
+// ---- focus ----
+let focusDistance = 12.40;
+let focusMoving = false;
+function updateFocusButtonUI(){
+  const stopBtn = document.getElementById('focusToggleBtn');
+  if(!stopBtn) return;
+  const iconEl = stopBtn.querySelector('.fi .material-symbols-rounded');
+  const labelEl = stopBtn.querySelectorAll('div')[1];
+  stopBtn.classList.toggle('stopped', !focusMoving);
+  stopBtn.classList.toggle('stop', focusMoving);
+  if(focusMoving){
+    if(iconEl) iconEl.textContent = 'pause_circle';
+    if(labelEl) labelEl.textContent = 'Parar Foco';
+  } else {
+    if(iconEl) iconEl.textContent = 'play_arrow';
+    if(labelEl) labelEl.textContent = 'Foco parado';
+  }
+}
+
+function nudgeFocus(microns){
+  if(microns === 0){
+    focusMoving = false;
+    updateFocusButtonUI();
+    showToast('Foco parado','pause_circle');
+    return;
+  }
+  focusMoving = true;
+  updateFocusButtonUI();
+  focusDistance += microns/1000;
+  const el = document.getElementById('focusDist');
+  if(el) el.textContent = focusDistance.toFixed(2)+' mm';
+}
+
+function toggleFocus(){
+  focusMoving = !focusMoving;
+  updateFocusButtonUI();
+  showToast(focusMoving ? 'Foco em movimento' : 'Foco parado', focusMoving ? 'pause_circle' : 'play_arrow');
+}
+
+// ---- camera settings ----
+document.getElementById('isoRow')?.addEventListener('click', e=>{
+  const chip = e.target.closest('.chip');
+  if(!chip) return;
+  document.querySelectorAll('#isoRow .chip').forEach(c=>c.classList.remove('active'));
+  chip.classList.add('active');
+  const isoQuick = document.getElementById('isoQuick');
+  if(isoQuick) isoQuick.textContent = 'ISO '+chip.dataset.v;
+  isoIdx = isoValues.indexOf(parseInt(chip.dataset.v));
+});
+const shutterSteps = ['1/30 s','1/60 s','1/90 s','1/125 s','1/180 s','1/250 s','1/350 s','1/500 s','1/1000 s'];
+function updateShutter(v){ const el = document.getElementById('shutterVal'); if(el) el.textContent = shutterSteps[v]; }
+function toggleSwitch(id){ document.getElementById(id)?.classList.toggle('on'); }
+function updateColorVal(id, value){ const el = document.getElementById(id); if(el) el.textContent = (value>0? '+' : '') + value; }
+let advOpen = true;
+function toggleAdvanced(){ advOpen = !advOpen; document.getElementById('advPanel')?.classList.toggle('open', advOpen); document.getElementById('advChev') && (document.getElementById('advChev').textContent = advOpen ? 'expand_less':'expand_more'); }
+
+// ---- pump controls (home screen) ----
+let pumpRunning = false;
+let pumpCaptureInterval = null;
+function togglePump(){
+  const btn = document.getElementById('pumpToggle');
+  const icon = btn?.querySelector('.material-symbols-rounded');
+  pumpRunning = !pumpRunning;
+  if(pumpRunning){
+    btn?.classList.remove('stopped'); btn?.classList.add('running');
+    if(icon) icon.textContent = 'stop';
+    showToast('Bomba iniciada','water_drop');
+    pumpCaptureInterval = setInterval(capture, 2500);
+  } else {
+    btn?.classList.remove('running'); btn?.classList.add('stopped');
+    if(icon) icon.textContent = 'play_arrow';
+    showToast('Bomba parada','stop_circle');
+    clearInterval(pumpCaptureInterval);
+  }
+}
+function reversePump(){ showToast('Direção da bomba revertida','sync_alt'); }
+
+// ---- capture / gallery ----
+let captures = 0;
+function capture(){
+  const flash = document.getElementById('flash');
+  if(flash){ flash.style.transition='none'; flash.style.opacity='0.9'; requestAnimationFrame(()=>{ flash.style.transition='opacity 0.35s ease'; flash.style.opacity='0'; }); }
+  captures++;
+  const galBadge = document.getElementById('galBadge'); if(galBadge) galBadge.textContent = captures;
+  const gallerySub = document.getElementById('gallerySub'); if(gallerySub) gallerySub.textContent = captures+(captures===1?' CAPTURA':' CAPTURAS');
+  const empty = document.getElementById('galleryEmpty');
+  const grid = document.getElementById('galleryGrid');
+  if(captures===1 && empty && grid){ empty.style.display='none'; grid.style.display='grid'; }
+  if(grid){ const thumb = document.createElement('div'); thumb.className='thumb'; thumb.innerHTML = '<span class="material-symbols-rounded">image</span>'; grid.prepend(thumb); }
+  showToast('Imagem capturada','check_circle');
+}
+
+// ---- system monitoring helpers ----
+function detectUSB(){ showToast('Unidade detectada','usb'); }
+function backupUSB(){ showToast('Backup iniciado','cloud_upload'); }
+function eraseLocal(){ if(confirm('Apagar dados locais? Esta ação não pode ser desfeita.')){ showToast('Dados apagados','delete'); } }
+function forceTimeUpdate(){ const el = document.getElementById('localTime'); const now = new Date(); if(el) el.textContent = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); showToast('Relógio atualizado','refresh'); }
+
+function updateSystemGauges(){ document.getElementById('procVal') && (document.getElementById('procVal').textContent='34%'); document.getElementById('cpuTemp') && (document.getElementById('cpuTemp').textContent='42°C'); document.getElementById('memVal') && (document.getElementById('memVal').textContent='58%'); document.getElementById('diskVal') && (document.getElementById('diskVal').textContent='71%'); }
+
+// initialize system visuals
+window.addEventListener('load', ()=>{ updateSystemGauges(); forceTimeUpdate(); updateFocusButtonUI(); });
+
+// render semicircle arcs by percent (0-100)
+function setArc(arcId, percent){
+  const arc = document.getElementById(arcId);
+  if(!arc) return;
+  const radius = 45; // matches SVG path R
+  const length = Math.PI * radius; // semicircle length
+  const offset = length * (1 - Math.max(0, Math.min(100, percent)) / 100);
+  arc.style.strokeDasharray = length.toFixed(2);
+  arc.style.strokeDashoffset = offset.toFixed(2);
+}
+
+function animateSystemGauges(){
+  // example values (replace with real telemetry)
+  const proc = 34, mem=58, disk=71;
+  setArc('procArc', proc);
+  setArc('memArc', mem);
+  setArc('diskArc', disk);
+  // cpu temperature not a percent; map to percent for arc
+  const temp = 42; // map 0-100C -> 0-100%
+  setArc('cpuArc', Math.min(100, Math.max(0, (temp/100)*100)));
+  // update numeric text
+  document.getElementById('procVal') && (document.getElementById('procVal').textContent = proc + '%');
+  document.getElementById('memVal') && (document.getElementById('memVal').textContent = mem + '%');
+  document.getElementById('diskVal') && (document.getElementById('diskVal').textContent = disk + '%');
+  document.getElementById('cpuTemp') && (document.getElementById('cpuTemp').textContent = temp + '°C');
+}
+
+// run animation after load and when opening system sheet
+window.addEventListener('load', ()=>{ setTimeout(animateSystemGauges, 200); });
+function openSheet(id){
+  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'));
+  const el = document.getElementById(id);
+  if(el) el.classList.add('open');
+  document.getElementById('scrim')?.classList.add('open');
+  activeSheet = id;
+  if(id === 'system') setTimeout(animateSystemGauges, 120);
+}
+
+let toastTimer;
+function showToast(text, icon){
+  const toast = document.getElementById('toast');
+  if(!toast) return;
+  document.getElementById('toastText') && (document.getElementById('toastText').textContent = text);
+  toast.querySelector('.material-symbols-rounded') && (toast.querySelector('.material-symbols-rounded').textContent = icon || 'check_circle');
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toast.classList.remove('show'), 1600);
+}
+
+// Simulated actions: Atualizar Lista de Pastas (segmentation) e Validar (sample)
+window.addEventListener('load', ()=>{
+  const updateBtn = document.getElementById('updateFoldersBtn');
+  if(updateBtn){
+    updateBtn.addEventListener('click', async ()=>{
+      const orig = updateBtn.textContent;
+      updateBtn.disabled = true;
+      updateBtn.textContent = 'Atualizando…';
+      updateBtn.style.opacity = '0.7';
+      await new Promise(r=>setTimeout(r,900));
+      updateBtn.disabled = false;
+      updateBtn.textContent = orig;
+      updateBtn.style.opacity = '';
+      showToast('Lista de pastas atualizada','cached');
+      const segBody = document.querySelector('#segmentation .sheet-body');
+      if(segBody){
+        let list = segBody.querySelector('.folders-list');
+        if(!list){ list = document.createElement('div'); list.className='folders-list'; list.style.marginTop='8px'; list.style.color='var(--text-dim)'; segBody.insertBefore(list, segBody.querySelector('.section-label')) }
+        list.textContent = 'Pastas encontradas: 12';
+      }
+    });
+  }
+
+  const valBtn = document.getElementById('validateSample');
+  if(valBtn){
+    valBtn.addEventListener('click', async ()=>{
+      const orig = valBtn.textContent;
+      valBtn.disabled = true; valBtn.textContent = 'Validando…'; valBtn.style.opacity='0.7';
+      await new Promise(r=>setTimeout(r,700));
+      valBtn.disabled = false; valBtn.textContent = orig; valBtn.style.opacity='';
+      showToast('Amostra validada','check_circle');
+    });
+  }
+});
+
+
+  // fluidic acquisition controls
+  const startBtn = document.getElementById('startAcq');
+  const stopBtn = document.getElementById('stopAcq');
+  const updateFluid = document.getElementById('updateFluidConfig');
+  const delayEl = document.getElementById('fluidDelay');
+  const pumpVolEl = document.getElementById('fluidPumpVolume');
+  const totalPumpedEl = document.getElementById('fluidTotalPumped');
+  const flowcell = document.getElementById('flowcellSelect');
+  const dirSwitch = document.getElementById('fluidDirection');
+
+  let aquRunning = false;
+  let aquInterval = null;
+  let pumped = 0.0; // mL
+
+  function changeFluidDelay(delta){
+    if(!delayEl) return;
+    let v = parseFloat(delayEl.textContent || '0');
+    v = Math.max(0, +(v + delta).toFixed(1));
+    delayEl.textContent = v.toFixed(1);
+  }
+  window.changeFluidDelay = changeFluidDelay;
+
+  function updateFluidUI(){ if(pumpVolEl) pumpVolEl.textContent = pumped.toFixed(1) + ' mL'; if(totalPumpedEl) totalPumpedEl.textContent = pumped.toFixed(1) + ' mL'; }
+
+  function startAcquisition(){
+    if(aquRunning) return;
+    aquRunning = true;
+    showToast('Aquisição iniciada','play_arrow');
+    // simulate pumping: increase pumped volume periodically
+    aquInterval = setInterval(()=>{
+      // pump power affects rate
+      const power = parseInt(document.getElementById('pumpPower')?.value || '40');
+      const rate = 0.02 * (power/40); // mL per tick
+      pumped += rate;
+      updateFluidUI();
+    }, 500);
+  }
+
+  function stopAcquisition(){ if(!aquRunning) return; aquRunning = false; clearInterval(aquInterval); aquInterval = null; showToast('Aquisição parada','stop_circle'); }
+
+  function updateFluidConfig(){ const d = delayEl?.textContent; const f = flowcell?.value; showToast('Configuração atualizada','save'); console.log('Fluid config', {delay:d, flowcell:f}); }
+
+  if(startBtn) startBtn.addEventListener('click', startAcquisition);
+  if(stopBtn) stopBtn.addEventListener('click', stopAcquisition);
+  if(updateFluid) updateFluid.addEventListener('click', updateFluidConfig);
+  if(dirSwitch) dirSwitch.addEventListener('click', ()=>dirSwitch.classList.toggle('on'));
+  // initialize display values
+  pumped = 0.0; updateFluidUI();

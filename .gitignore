@@ -1,0 +1,11 @@
+.DS_Store
+node_modules/
+.vscode/
+dist/
+*.log
+.env
+coverage/
+/build
+Thumbs.db
+/*.zip
+/*.tar.gz

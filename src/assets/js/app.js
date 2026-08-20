@@ -15,12 +15,21 @@ if(specimen){
   }
 }
 
-// ---- magnification chips ----
+// ---- digital zoom preview only ----
+const previewContent = document.getElementById('previewContent');
+const zoomChips = document.querySelectorAll('.zoom-chip');
+function applyDigitalZoom(value){
+  const numeric = Number(value) || 100;
+  if(previewContent){ previewContent.style.transform = `scale(${numeric / 100})`; }
+  const zoomValue = document.getElementById('digitalZoomValue');
+  if(zoomValue) zoomValue.textContent = `${numeric}%`;
+}
 document.querySelector('.zoom-pill')?.addEventListener('click', e=>{
-  const chip = e.target.closest('.mag-chip');
+  const chip = e.target.closest('.zoom-chip');
   if(!chip) return;
-  document.querySelectorAll('.mag-chip').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.zoom-chip').forEach(c=>c.classList.remove('active'));
   chip.classList.add('active');
+  applyDigitalZoom(chip.dataset.v || 100);
 });
 
 // ---- LED toggle ----
@@ -78,44 +87,7 @@ function closeSheet(){
   activeSheet = null;
 }
 
-// ---- focus ----
-let focusDistance = 12.40;
-let focusMoving = false;
-function updateFocusButtonUI(){
-  const stopBtn = document.getElementById('focusToggleBtn');
-  if(!stopBtn) return;
-  const iconEl = stopBtn.querySelector('.fi .material-symbols-rounded');
-  const labelEl = stopBtn.querySelectorAll('div')[1];
-  stopBtn.classList.toggle('stopped', !focusMoving);
-  stopBtn.classList.toggle('stop', focusMoving);
-  if(focusMoving){
-    if(iconEl) iconEl.textContent = 'pause_circle';
-    if(labelEl) labelEl.textContent = 'Parar Foco';
-  } else {
-    if(iconEl) iconEl.textContent = 'play_arrow';
-    if(labelEl) labelEl.textContent = 'Foco parado';
-  }
-}
-
-function nudgeFocus(microns){
-  if(microns === 0){
-    focusMoving = false;
-    updateFocusButtonUI();
-    showToast('Foco parado','pause_circle');
-    return;
-  }
-  focusMoving = true;
-  updateFocusButtonUI();
-  focusDistance += microns/1000;
-  const el = document.getElementById('focusDist');
-  if(el) el.textContent = focusDistance.toFixed(2)+' mm';
-}
-
-function toggleFocus(){
-  focusMoving = !focusMoving;
-  updateFocusButtonUI();
-  showToast(focusMoving ? 'Foco em movimento' : 'Foco parado', focusMoving ? 'pause_circle' : 'play_arrow');
-}
+// ---- focus is manual on the lens; no software focus control ----
 
 // ---- camera settings ----
 document.getElementById('isoRow')?.addEventListener('click', e=>{
@@ -179,7 +151,7 @@ function forceTimeUpdate(){ const el = document.getElementById('localTime'); con
 function updateSystemGauges(){ document.getElementById('procVal') && (document.getElementById('procVal').textContent='34%'); document.getElementById('cpuTemp') && (document.getElementById('cpuTemp').textContent='42°C'); document.getElementById('memVal') && (document.getElementById('memVal').textContent='58%'); document.getElementById('diskVal') && (document.getElementById('diskVal').textContent='71%'); }
 
 // initialize system visuals
-window.addEventListener('load', ()=>{ updateSystemGauges(); forceTimeUpdate(); updateFocusButtonUI(); });
+window.addEventListener('load', ()=>{ updateSystemGauges(); forceTimeUpdate(); applyDigitalZoom(100); });
 
 // render semicircle arcs by percent (0-100)
 function setArc(arcId, percent){
@@ -271,6 +243,8 @@ window.addEventListener('load', ()=>{
   const stopBtn = document.getElementById('stopAcq');
   const updateFluid = document.getElementById('updateFluidConfig');
   const delayEl = document.getElementById('fluidDelay');
+  const totalVolumeInput = document.getElementById('fluidTotalVolume');
+  const stepVolumeInput = document.getElementById('fluidStepVolume');
   const pumpVolEl = document.getElementById('fluidPumpVolume');
   const totalPumpedEl = document.getElementById('fluidTotalPumped');
   const flowcell = document.getElementById('flowcellSelect');
@@ -280,6 +254,16 @@ window.addEventListener('load', ()=>{
   let aquInterval = null;
   let pumped = 0.0; // mL
 
+  function clampNumberInput(input, min = 0){
+    if(!input) return;
+    const value = Number(input.value);
+    if(!Number.isFinite(value) || value < min){
+      input.value = min.toFixed(2);
+      return;
+    }
+    input.value = Number(value).toFixed(2);
+  }
+
   function changeFluidDelay(delta){
     if(!delayEl) return;
     let v = parseFloat(delayEl.textContent || '0');
@@ -288,26 +272,61 @@ window.addEventListener('load', ()=>{
   }
   window.changeFluidDelay = changeFluidDelay;
 
-  function updateFluidUI(){ if(pumpVolEl) pumpVolEl.textContent = pumped.toFixed(1) + ' mL'; if(totalPumpedEl) totalPumpedEl.textContent = pumped.toFixed(1) + ' mL'; }
+  function updateFluidUI(){
+    if(totalVolumeInput) clampNumberInput(totalVolumeInput, 0);
+    if(stepVolumeInput) clampNumberInput(stepVolumeInput, 0);
+    if(pumpVolEl) pumpVolEl.textContent = pumped.toFixed(2) + ' mL';
+    if(totalPumpedEl) totalPumpedEl.textContent = pumped.toFixed(2) + ' mL';
+  }
 
   function startAcquisition(){
     if(aquRunning) return;
     aquRunning = true;
     showToast('Aquisição iniciada','play_arrow');
-    // simulate pumping: increase pumped volume periodically
     aquInterval = setInterval(()=>{
-      // pump power affects rate
-      const power = parseInt(document.getElementById('pumpPower')?.value || '40');
-      const rate = 0.02 * (power/40); // mL per tick
-      pumped += rate;
+      const totalVolume = Number(totalVolumeInput?.value || 1.0);
+      const stepSize = Number(stepVolumeInput?.value || 0.01);
+      const maxAllowed = Math.max(totalVolume, 0);
+      const nextPumped = Math.min(pumped + Math.max(stepSize, 0), maxAllowed);
+      pumped = Number.isFinite(nextPumped) ? nextPumped : 0;
+      if(pumped >= maxAllowed){
+        pumped = maxAllowed;
+        stopAcquisition();
+      }
       updateFluidUI();
     }, 500);
   }
 
   function stopAcquisition(){ if(!aquRunning) return; aquRunning = false; clearInterval(aquInterval); aquInterval = null; showToast('Aquisição parada','stop_circle'); }
 
-  function updateFluidConfig(){ const d = delayEl?.textContent; const f = flowcell?.value; showToast('Configuração atualizada','save'); console.log('Fluid config', {delay:d, flowcell:f}); }
+  function updateFluidConfig(){
+    const totalValue = Number(totalVolumeInput?.value || 1.0);
+    const stepValue = Number(stepVolumeInput?.value || 0.01);
+    if(!Number.isFinite(totalValue) || totalValue < 0 || !Number.isFinite(stepValue) || stepValue < 0){
+      showToast('Valores inválidos','error');
+      return;
+    }
+    const d = delayEl?.textContent;
+    const f = flowcell?.value;
+    showToast('Configuração atualizada','save');
+    console.log('Fluid config', { delay: d, flowcell: f, totalVolume: totalValue, stepVolume: stepValue });
+  }
 
+  document.querySelectorAll('[data-target]').forEach(button => {
+    button.addEventListener('click', () => {
+      const targetName = button.dataset.target;
+      const step = Number(button.dataset.step || '0');
+      const input = document.getElementById(targetName);
+      if(!input) return;
+      const next = Number(input.value || 0) + step;
+      if(next < 0) return;
+      input.value = Number(next).toFixed(2);
+      updateFluidUI();
+    });
+  });
+
+  if(totalVolumeInput){ totalVolumeInput.addEventListener('change', () => clampNumberInput(totalVolumeInput, 0)); }
+  if(stepVolumeInput){ stepVolumeInput.addEventListener('change', () => clampNumberInput(stepVolumeInput, 0)); }
   if(startBtn) startBtn.addEventListener('click', startAcquisition);
   if(stopBtn) stopBtn.addEventListener('click', stopAcquisition);
   if(updateFluid) updateFluid.addEventListener('click', updateFluidConfig);

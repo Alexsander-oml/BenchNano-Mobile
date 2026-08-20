@@ -21,10 +21,12 @@
           </div>
 
           <div class="zoom-row">
-            <div class="zoom-pill">
-              <div class="mag-chip" data-v="100">100×</div>
-              <div class="mag-chip active" data-v="400">400×</div>
-              <div class="mag-chip" data-v="1000">1000×</div>
+            <div class="zoom-pill" aria-label="Zoom digital">
+              <div class="zoom-chip active" data-v="100">100%</div>
+              <div class="zoom-chip" data-v="150">150%</div>
+              <div class="zoom-chip" data-v="200">200%</div>
+              <div class="zoom-chip" data-v="250">250%</div>
+              <div class="zoom-chip" data-v="300">300%</div>
             </div>
             <div class="quick-anchor">
               <div class="quick-pill" id="quickPill">
@@ -41,7 +43,6 @@
       </div>
 
       <div class="mode-tabs" id="quickTabs">
-        <div class="mode-tab" onclick="openSheet('focus')">FOCO</div>
         <div class="mode-tab" onclick="openSheet('camera')">CÂMERA</div>
         <div class="mode-tab" onclick="openSheet('optical')">ÓPTICA</div>
         <div class="mode-tab" onclick="openSheet('fluidicAcq')">FLUÍDICA</div>
@@ -69,7 +70,6 @@
           <button class="sheet-close" onclick="closeSheet()"><span class="material-symbols-rounded">close</span></button>
         </div>
         <div class="sheet-body">
-          <div class="menu-item" onclick="openSheet('focus')"><div class="menu-icon"><span class="material-symbols-rounded">center_focus_weak</span></div><div class="menu-text"><div class="t">Ajuste de Foco</div><div class="s">Foco óptico manual</div></div><span class="material-symbols-rounded chev">chevron_right</span></div>
           <div class="menu-item" onclick="openSheet('camera')"><div class="menu-icon"><span class="material-symbols-rounded">photo_camera</span></div><div class="menu-text"><div class="t">Configurações da Câmera</div><div class="s">ISO, obturador, balanço de branco</div></div><span class="material-symbols-rounded chev">chevron_right</span></div>
           <div class="menu-item" onclick="openSheet('optical')"><div class="menu-icon"><span class="material-symbols-rounded">biotech</span></div><div class="menu-text"><div class="t">Caracterização Óptica</div><div class="s">Lente, magnificação, resolução</div></div><span class="material-symbols-rounded chev">chevron_right</span></div>
           <div class="menu-item" onclick="openSheet('system')"><div class="menu-icon"><span class="material-symbols-rounded">monitoring</span></div><div class="menu-text"><div class="t">Monitoramento do Sistema</div><div class="s">CPU, memória, GPS, backup USB</div></div><span class="material-symbols-rounded chev">chevron_right</span></div>
@@ -78,58 +78,6 @@
           <div class="menu-item" onclick="openSheet('sample')"><div class="menu-icon"><span class="material-symbols-rounded">assignment</span></div><div class="menu-text"><div class="t">Amostra</div><div class="s">Identificação, rede de coleta, localização</div></div><span class="material-symbols-rounded chev">chevron_right</span></div>
         </div>
       </div>
-      <!-- FOLDERS FOR MODES -->
-      <div class="sheet" id="focus">
-        <div class="sheet-handle"></div>
-        <div class="sheet-head">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <button class="back-btn" onclick="openSheet('settingsRoot')"><span class="material-symbols-rounded">arrow_back</span><span>Voltar</span></button>
-          </div>
-          <button class="sheet-close" onclick="closeSheet()"><span class="material-symbols-rounded">close</span></button>
-        </div>
-        <div class="sheet-body">
-          <div style="margin-bottom:12px;"><div class="sheet-title">Ajuste de Foco</div></div>
-
-          <div class="focus-grid">
-            <button class="focus-btn" onclick="nudgeFocus(1000)">
-              <div class="fi"><span class="material-symbols-rounded">north</span></div>
-              <div>Subir +1 mm</div>
-            </button>
-
-            <button class="focus-btn" onclick="nudgeFocus(100)">
-              <div class="fi"><span class="material-symbols-rounded">north</span></div>
-              <div>Subir +100 µm</div>
-            </button>
-
-            <button id="focusToggleBtn" class="focus-toggle-btn stopped" onclick="toggleFocus()">
-              <div class="fi"><span class="material-symbols-rounded">pause</span></div>
-              <div>Parar Foco</div>
-            </button>
-
-            <button class="focus-btn" onclick="nudgeFocus(-100)">
-              <div class="fi"><span class="material-symbols-rounded">south</span></div>
-              <div>Descer -100 µm</div>
-            </button>
-
-            <button class="focus-btn" onclick="nudgeFocus(-1000)">
-              <div class="fi"><span class="material-symbols-rounded">south</span></div>
-              <div>Descer -1 mm</div>
-            </button>
-          </div>
-
-          <div class="field-row" style="margin-top:10px;">
-            <div class="field">
-              <div class="l">DISTÂNCIA DE FOCO</div>
-              <div class="v"><span id="focusDist">12.40</span> mm</div>
-            </div>
-            <div class="field">
-              <div class="l">VELOCIDADE DE FOCO</div>
-              <div class="v">0.5 mm/s</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div class="sheet" id="camera">
         <div class="sheet-handle"></div>
         <div class="sheet-head">
@@ -197,22 +145,22 @@
               <div class="v">f/0.65 NA</div>
             </div>
             <div class="info-card">
-              <div class="l"><span class="material-symbols-rounded">search</span> Magnificação</div>
-              <div class="v">400×</div>
+              <div class="l"><span class="material-symbols-rounded">zoom_in</span> Zoom Digital</div>
+              <div class="v" id="digitalZoomValue">100%</div>
             </div>
             <div class="info-card">
-              <div class="l"><span class="material-symbols-rounded">grid_on</span> Resolução de pixel</div>
-              <div class="v">1920×1080</div>
+              <div class="l"><span class="material-symbols-rounded">grid_on</span> Resolução</div>
+              <div class="v">4056 × 3040</div>
             </div>
             <div class="info-card">
-              <div class="l"><span class="material-symbols-rounded">memory</span> Menor célula</div>
-              <div class="v">2.1 µm</div>
+              <div class="l"><span class="material-symbols-rounded">memory</span> Profundidade de campo</div>
+              <div class="v">12–19 µm</div>
             </div>
           </div>
           <div class="info-grid" style="margin-top:12px;">
             <div class="info-card wide">
-              <div class="l"><span class="material-symbols-rounded">aspect_ratio</span> Maior célula</div>
-              <div class="v">48.7 µm</div>
+              <div class="l"><span class="material-symbols-rounded">aspect_ratio</span> Área por pixel</div>
+              <div class="v">0.667 µm²/pixel</div>
             </div>
           </div>
         </div>
@@ -401,13 +349,21 @@
             </div>
           </div>
 
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
-            <div style="flex:1;">
-              <div class="l">Atraso para estabilizar imagem (s)</div>
-              <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-                <button class="flat-btn" onclick="changeFluidDelay(-0.1)">-</button>
-                <div style="flex:1;text-align:center;"><span id="fluidDelay">0.1</span></div>
-                <button class="flat-btn" onclick="changeFluidDelay(0.1)">+</button>
+          <div class="fluid-control-grid" style="margin-bottom:12px;">
+            <div class="fluid-field">
+              <div class="fluid-label">Volume total (mL)</div>
+              <div class="fluid-stepper">
+                <button type="button" class="flat-btn" data-target="fluidTotalVolume" data-step="-0.01" aria-label="Diminuir volume total">−</button>
+                <input id="fluidTotalVolume" class="fluid-value-input" type="number" min="0" step="0.01" value="1.00" aria-label="Volume total em mililitros" />
+                <button type="button" class="flat-btn" data-target="fluidTotalVolume" data-step="0.01" aria-label="Aumentar volume total">+</button>
+              </div>
+            </div>
+            <div class="fluid-field">
+              <div class="fluid-label">Passo (mL)</div>
+              <div class="fluid-stepper">
+                <button type="button" class="flat-btn" data-target="fluidStepVolume" data-step="-0.01" aria-label="Diminuir passo">−</button>
+                <input id="fluidStepVolume" class="fluid-value-input" type="number" min="0" step="0.01" value="0.01" aria-label="Passo em mililitros" />
+                <button type="button" class="flat-btn" data-target="fluidStepVolume" data-step="0.01" aria-label="Aumentar passo">+</button>
               </div>
             </div>
             <div style="width:160px;">
@@ -422,7 +378,7 @@
 
           <div style="margin-bottom:12px;">
             <div class="info-row"><div class="k">Volume total capturado</div><div class="v" id="fluidTotalCaptured">-</div></div>
-            <div class="info-row"><div class="k">Volume total bombeado</div><div class="v" id="fluidTotalPumped">0.0 mL</div></div>
+            <div class="info-row"><div class="k">Volume total bombeado</div><div class="v" id="fluidTotalPumped">0.00 mL</div></div>
           </div>
 
           <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">

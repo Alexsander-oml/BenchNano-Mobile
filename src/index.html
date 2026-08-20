@@ -428,9 +428,21 @@
           <div id="galleryEmpty" style="text-align:center;padding:32px;color:var(--text-faint);">No captures</div>
           <div id="galleryGrid" class="gallery-grid" style="display:none;margin-top:12px;">
           </div>
-          <button class="action-btn primary" style="margin-top:16px;" onclick="capture()">
-            <span class="material-symbols-rounded">photo_camera</span> Capture Now
-          </button>
+        </div>
+      </div>
+
+      <div class="capture-viewer" id="captureViewer" aria-hidden="true">
+        <div class="capture-viewer-head">
+          <div class="sheet-title">Capture Preview</div>
+          <button class="sheet-close" type="button" onclick="closeCaptureViewer()" title="Close preview"><span class="material-symbols-rounded">close</span></button>
+        </div>
+        <div class="capture-viewer-stage">
+          <img id="captureViewerImage" alt="Captured preview" />
+        </div>
+        <div class="capture-viewer-controls" aria-label="Capture zoom controls">
+          <button class="flat-btn" type="button" onclick="adjustCaptureZoom(-0.25)" title="Zoom out"><span class="material-symbols-rounded">remove</span></button>
+          <button class="flat-btn capture-zoom-reset" type="button" onclick="resetCaptureZoom()">100%</button>
+          <button class="flat-btn" type="button" onclick="adjustCaptureZoom(0.25)" title="Zoom in"><span class="material-symbols-rounded">add</span></button>
         </div>
       </div>
 

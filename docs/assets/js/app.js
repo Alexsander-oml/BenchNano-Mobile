@@ -129,17 +129,104 @@ function reversePump(){ showToast('Pump direction reversed','sync_alt'); }
 
 // ---- capture / gallery ----
 let captures = 0;
+let captureZoom = 1;
+
+function createCaptureImage(){
+  const preview = document.getElementById('preview');
+  const canvas = document.createElement('canvas');
+  const scale = 2;
+  const width = Math.max(preview?.clientWidth || 390, 1);
+  const height = Math.max(preview?.clientHeight || 600, 1);
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+  const context = canvas.getContext('2d');
+  context.scale(scale, scale);
+
+  const background = context.createRadialGradient(width * 0.5, height * 0.45, 0, width * 0.5, height * 0.45, height * 0.8);
+  background.addColorStop(0, '#0d1f1f');
+  background.addColorStop(0.55, '#050807');
+  background.addColorStop(1, '#000000');
+  context.fillStyle = background;
+  context.fillRect(0, 0, width, height);
+
+  document.querySelectorAll('.cell').forEach(cell => {
+    const style = getComputedStyle(cell);
+    const cellWidth = parseFloat(style.width) || 0;
+    const cellHeight = parseFloat(style.height) || cellWidth;
+    const left = (parseFloat(style.left) / 100) * width;
+    const top = (parseFloat(style.top) / 100) * height;
+    const centerX = left + cellWidth / 2;
+    const centerY = top + cellHeight / 2;
+    const radius = Math.max(cellWidth, cellHeight) / 2;
+    const cellGradient = context.createRadialGradient(centerX - radius * 0.3, centerY - radius * 0.3, 0, centerX, centerY, radius);
+    cellGradient.addColorStop(0, 'rgba(23,166,172,0.55)');
+    cellGradient.addColorStop(0.7, 'rgba(23,166,172,0.16)');
+    cellGradient.addColorStop(1, 'rgba(23,166,172,0.04)');
+    context.fillStyle = cellGradient;
+    context.beginPath();
+    context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    context.fill();
+  });
+
+  return canvas.toDataURL('image/png');
+}
+
 function capture(){
   const flash = document.getElementById('flash');
   if(flash){ flash.style.transition='none'; flash.style.opacity='0.9'; requestAnimationFrame(()=>{ flash.style.transition='opacity 0.35s ease'; flash.style.opacity='0'; }); }
   captures++;
   const galBadge = document.getElementById('galBadge'); if(galBadge) galBadge.textContent = captures;
-  const gallerySub = document.getElementById('gallerySub'); if(gallerySub) gallerySub.textContent = captures+(captures===1?' CAPTURA':' CAPTURAS');
+  const gallerySub = document.getElementById('gallerySub'); if(gallerySub) gallerySub.textContent = captures+(captures===1?' SHOT':' SHOTS');
   const empty = document.getElementById('galleryEmpty');
   const grid = document.getElementById('galleryGrid');
   if(captures===1 && empty && grid){ empty.style.display='none'; grid.style.display='grid'; }
-  if(grid){ const thumb = document.createElement('div'); thumb.className='thumb'; thumb.innerHTML = '<span class="material-symbols-rounded">image</span>'; grid.prepend(thumb); }
+  const imageSrc = createCaptureImage();
+  if(grid){
+    const thumb = document.createElement('button');
+    thumb.type = 'button';
+    thumb.className = 'gallery-thumb';
+    thumb.title = `Open capture ${captures}`;
+    thumb.setAttribute('aria-label', `Open capture ${captures}`);
+    thumb.innerHTML = `<img src="${imageSrc}" alt="Capture ${captures}">`;
+    thumb.addEventListener('click', () => openCaptureViewer(imageSrc));
+    grid.prepend(thumb);
+  }
   showToast('Image captured','check_circle');
+}
+
+function updateCaptureZoom(){
+  const image = document.getElementById('captureViewerImage');
+  const reset = document.querySelector('.capture-zoom-reset');
+  if(image) image.style.transform = `scale(${captureZoom})`;
+  if(reset) reset.textContent = `${Math.round(captureZoom * 100)}%`;
+}
+
+function openCaptureViewer(imageSrc){
+  const viewer = document.getElementById('captureViewer');
+  const image = document.getElementById('captureViewerImage');
+  if(!viewer || !image) return;
+  image.src = imageSrc;
+  captureZoom = 1;
+  updateCaptureZoom();
+  viewer.classList.add('open');
+  viewer.setAttribute('aria-hidden', 'false');
+}
+
+function closeCaptureViewer(){
+  const viewer = document.getElementById('captureViewer');
+  if(!viewer) return;
+  viewer.classList.remove('open');
+  viewer.setAttribute('aria-hidden', 'true');
+}
+
+function adjustCaptureZoom(delta){
+  captureZoom = Math.min(3, Math.max(0.5, +(captureZoom + delta).toFixed(2)));
+  updateCaptureZoom();
+}
+
+function resetCaptureZoom(){
+  captureZoom = 1;
+  updateCaptureZoom();
 }
 
 // ---- system monitoring helpers ----

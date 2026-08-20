@@ -29,6 +29,10 @@ async function captureModule(page, moduleName, fileName) {
   await page.waitForTimeout(1800);
   await page.screenshot({ path: `${outputDir}/home.png`, fullPage: true });
 
+  await page.locator('button[title="Settings"]').click();
+  await page.screenshot({ path: `${outputDir}/settings.png`, fullPage: true });
+  await page.evaluate(() => window.closeSheet());
+
   await page.locator('.zoom-chip[data-v="200"]').click();
   await page.screenshot({ path: `${outputDir}/home-zoom-200.png`, fullPage: true });
 

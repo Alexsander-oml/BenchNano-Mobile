@@ -1,0 +1,28 @@
+{
+  "name": "benchnano",
+  "version": "1.0.0",
+  "description": "Versão mobile experimental da interface do BenchNano (controle do instrumento).\r Esta pasta contém uma versão estática front-end para visualização e testes locais.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "screenshots": "node capture-screenshots.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alexsander-oml/BenchNano-Mobile.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Alexsander-oml/BenchNano-Mobile/issues"
+  },
+  "homepage": "https://github.com/Alexsander-oml/BenchNano-Mobile#readme",
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}

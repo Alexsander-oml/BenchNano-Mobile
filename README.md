@@ -22,6 +22,18 @@ python -m http.server --directory src 8000
 
 - Usar extensão Live Server do VS Code.
 
+## Capturas automatizadas
+
+Com o servidor local em execução, gere screenshots padronizados da interface mobile:
+
+```bash
+npm install
+npx playwright install chromium
+npm run screenshots
+```
+
+As imagens são salvas em `screenshots/` com viewport de celular de 390 × 844 pixels. A URL pode ser alterada com a variável `BENCHNANO_URL`.
+
 ## Próximos passos sugeridos
 - Extrair assets (icons, imagens) para `src/assets/img`
 - Automatizar build/empacotamento se precisar publicar (ex: usar `vite` ou `parcel`)

@@ -67,6 +67,11 @@ body{
       radial-gradient(circle at 50% 45%, #0d1f1f 0%, #050807 55%, #000000 100%);
 }
 .preview{ padding:12px 12px 80px; }
+.preview-content{
+    position:absolute; inset:0; overflow:hidden;
+    transition:transform 0.2s ease;
+    transform-origin:center center;
+}
 .specimen{ position:absolute; inset:0; overflow:hidden; }
 .cell{
     position:absolute; border-radius:50%;

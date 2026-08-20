@@ -116,16 +116,16 @@ function togglePump(){
   if(pumpRunning){
     btn?.classList.remove('stopped'); btn?.classList.add('running');
     if(icon) icon.textContent = 'stop';
-    showToast('Bomba iniciada','water_drop');
+    showToast('Pump started','water_drop');
     pumpCaptureInterval = setInterval(capture, 2500);
   } else {
     btn?.classList.remove('running'); btn?.classList.add('stopped');
     if(icon) icon.textContent = 'play_arrow';
-    showToast('Bomba parada','stop_circle');
+    showToast('Pump stopped','stop_circle');
     clearInterval(pumpCaptureInterval);
   }
 }
-function reversePump(){ showToast('Direção da bomba revertida','sync_alt'); }
+function reversePump(){ showToast('Pump direction reversed','sync_alt'); }
 
 // ---- capture / gallery ----
 let captures = 0;
@@ -139,14 +139,14 @@ function capture(){
   const grid = document.getElementById('galleryGrid');
   if(captures===1 && empty && grid){ empty.style.display='none'; grid.style.display='grid'; }
   if(grid){ const thumb = document.createElement('div'); thumb.className='thumb'; thumb.innerHTML = '<span class="material-symbols-rounded">image</span>'; grid.prepend(thumb); }
-  showToast('Imagem capturada','check_circle');
+  showToast('Image captured','check_circle');
 }
 
 // ---- system monitoring helpers ----
-function detectUSB(){ showToast('Unidade detectada','usb'); }
-function backupUSB(){ showToast('Backup iniciado','cloud_upload'); }
-function eraseLocal(){ if(confirm('Apagar dados locais? Esta ação não pode ser desfeita.')){ showToast('Dados apagados','delete'); } }
-function forceTimeUpdate(){ const el = document.getElementById('localTime'); const now = new Date(); if(el) el.textContent = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); showToast('Relógio atualizado','refresh'); }
+function detectUSB(){ showToast('Drive detected','usb'); }
+function backupUSB(){ showToast('Backup started','cloud_upload'); }
+function eraseLocal(){ if(confirm('Delete local data? This action cannot be undone.')){ showToast('Local data deleted','delete'); } }
+function forceTimeUpdate(){ const el = document.getElementById('localTime'); const now = new Date(); if(el) el.textContent = now.toLocaleDateString('en-US') + ' ' + now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}); showToast('Clock updated','refresh'); }
 
 function updateSystemGauges(){ document.getElementById('procVal') && (document.getElementById('procVal').textContent='34%'); document.getElementById('cpuTemp') && (document.getElementById('cpuTemp').textContent='42°C'); document.getElementById('memVal') && (document.getElementById('memVal').textContent='58%'); document.getElementById('diskVal') && (document.getElementById('diskVal').textContent='71%'); }
 
@@ -209,18 +209,18 @@ window.addEventListener('load', ()=>{
     updateBtn.addEventListener('click', async ()=>{
       const orig = updateBtn.textContent;
       updateBtn.disabled = true;
-      updateBtn.textContent = 'Atualizando…';
+      updateBtn.textContent = 'Updating…';
       updateBtn.style.opacity = '0.7';
       await new Promise(r=>setTimeout(r,900));
       updateBtn.disabled = false;
       updateBtn.textContent = orig;
       updateBtn.style.opacity = '';
-      showToast('Lista de pastas atualizada','cached');
+      showToast('Folder list updated','cached');
       const segBody = document.querySelector('#segmentation .sheet-body');
       if(segBody){
         let list = segBody.querySelector('.folders-list');
         if(!list){ list = document.createElement('div'); list.className='folders-list'; list.style.marginTop='8px'; list.style.color='var(--text-dim)'; segBody.insertBefore(list, segBody.querySelector('.section-label')) }
-        list.textContent = 'Pastas encontradas: 12';
+        list.textContent = 'Folders found: 12';
       }
     });
   }
@@ -229,10 +229,10 @@ window.addEventListener('load', ()=>{
   if(valBtn){
     valBtn.addEventListener('click', async ()=>{
       const orig = valBtn.textContent;
-      valBtn.disabled = true; valBtn.textContent = 'Validando…'; valBtn.style.opacity='0.7';
+      valBtn.disabled = true; valBtn.textContent = 'Validating…'; valBtn.style.opacity='0.7';
       await new Promise(r=>setTimeout(r,700));
       valBtn.disabled = false; valBtn.textContent = orig; valBtn.style.opacity='';
-      showToast('Amostra validada','check_circle');
+      showToast('Sample validated','check_circle');
     });
   }
 });
@@ -282,7 +282,7 @@ window.addEventListener('load', ()=>{
   function startAcquisition(){
     if(aquRunning) return;
     aquRunning = true;
-    showToast('Aquisição iniciada','play_arrow');
+    showToast('Acquisition started','play_arrow');
     aquInterval = setInterval(()=>{
       const totalVolume = Number(totalVolumeInput?.value || 1.0);
       const stepSize = Number(stepVolumeInput?.value || 0.01);
@@ -297,18 +297,18 @@ window.addEventListener('load', ()=>{
     }, 500);
   }
 
-  function stopAcquisition(){ if(!aquRunning) return; aquRunning = false; clearInterval(aquInterval); aquInterval = null; showToast('Aquisição parada','stop_circle'); }
+  function stopAcquisition(){ if(!aquRunning) return; aquRunning = false; clearInterval(aquInterval); aquInterval = null; showToast('Acquisition stopped','stop_circle'); }
 
   function updateFluidConfig(){
     const totalValue = Number(totalVolumeInput?.value || 1.0);
     const stepValue = Number(stepVolumeInput?.value || 0.01);
     if(!Number.isFinite(totalValue) || totalValue < 0 || !Number.isFinite(stepValue) || stepValue < 0){
-      showToast('Valores inválidos','error');
+      showToast('Invalid values','error');
       return;
     }
     const d = delayEl?.textContent;
     const f = flowcell?.value;
-    showToast('Configuração atualizada','save');
+    showToast('Configuration updated','save');
     console.log('Fluid config', { delay: d, flowcell: f, totalVolume: totalValue, stepVolume: stepValue });
   }
 
